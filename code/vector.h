@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <limits>
+#include <initializer_list>
 
 using namespace std;
 
@@ -50,6 +51,80 @@ class Vector {
                 contents[i] = value;
             }
         }
+
+        /**
+         * @brief Constructs a vector from an existing vector.
+         * @param other The exisiting vector.
+         */
+        Vector(const Vector& other) {
+            /* Copy size and capacity */
+            _size = other._size;
+            _capacity = other._capacity;
+
+            /* Allocate memory for the new vector */
+            contents = nullptr;
+            if (_size > 0) {
+                contents = new T[_capacity];
+            }
+
+            /* Initialize elements */
+            for (size_t i = 0; i < _size; i++) {
+                contents[i] = other.contents[i];
+            }
+        }
+
+        /**
+         * @brief Constructs a Vector from an initializer list.
+         * @param list The initializer list used to construct the Vector.
+         */
+        Vector(initializer_list<T> list) {
+            /* Update size and capacity */
+            _size = list.size();
+            _capacity = _size;
+
+            /* Allocate memory */
+            contents = nullptr;
+            if (_size > 0) {
+                contents = new T[_size];
+            }
+
+            /* Initialize elements */
+            size_t i = 0;
+            for (auto it = list.begin(); it != list.end(); it++, i++) {
+                contents[i] = *it;
+            }
+        }
+
+
+        /**
+         * @brief Assigns the contents of one vector to another
+         * @param other The vector being copied
+         */
+        Vector& operator=(const Vector& other) {
+            /* Check for self assignment */
+            if (this == &other) {
+                return *this;
+            }
+
+            /* Clean up memory */
+            delete[] contents;
+
+            /* Copy over fields */
+            _size = other._size;
+            _capacity = other._capacity;
+            
+            /* Allocate memory according to _capacity */
+            contents = new T[_capacity];
+
+            /* Copy over elements */
+            for (size_t i = 0; i < _size; i++) {
+                contents[i] = other.contents[i];
+            }
+
+            /* Return a reference */
+            return *this;
+        }
+
 
         /**
          * @brief Destroys the Vector and deallocates memory.
@@ -272,8 +347,13 @@ class Vector {
         void push_back(const T& value) {
             /* Reserve space if necessary */
             if (_size == _capacity) {
-                reserve(_capacity * 2);
+                if (_capacity == 0) {
+                    reserve(2);
+                } else {
+                    reserve(_capacity * 2);
+                }
             }
+
             
             /* Add on the element and update size */
             contents[_size] = value;
@@ -352,8 +432,8 @@ class Vector {
             }
 
             /* Shift existing elements */
-            for (size_t i = d; i > 0; i--) {
-                contents[i] = contents[i - d]; //todo: fix this loop
+            for (size_t i = _size; i > position; i--) {
+                contents[i + d - 1] = contents[i - 1]; //todo: fix this loop
             }
 
             /* Add new elements */
@@ -366,7 +446,42 @@ class Vector {
             _size += d;
         }
 
+        /**
+         * @brief Erases an element at the specified position.
+         * @param position The position of the element to erase.
+         * @throws std::out_of_range
+         */
+        void erase(size_t position) {
+            if (position >= _size) {
+                throw out_of_range("Out of bounds");
+            }
+            for (size_t i = position; i < _size - 1; i++) {
+                contents[i] = contents[i+1];
+            }
+            _size--;
+        }
 
+        /**
+         * @brief Removes all elements in a range.
+         * @param first The first element to erase (inclusive).
+         * @param last The last element to erase (exclusive).
+         * @throws std::out_of_range
+         */
+        void erase(size_t first, size_t last) {
+            /* Boundary check */
+            if ((first >= _size ) || (last > _size) || (last < first)) {
+                throw out_of_range("Out of range");
+            }
+
+            /* Copy elements */
+            size_t j = first;
+            for (size_t i = last; i < _size; i++, j++) {
+                contents[j] = contents[i];
+            }
+
+            /* Update size */
+            _size -= (last - first);
+        }
         /** @} */
 
         /**
