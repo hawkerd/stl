@@ -140,7 +140,6 @@ class Vector {
          * @name Element Access
          * @{
          */
-        
         /**
          * @brief Returns a reference to the element at the specified index with bounds checking.
          * @param index The index of the element to access.
@@ -149,6 +148,21 @@ class Vector {
          */
         T& at(size_t index) {
             /* Return a reference if the element is in bounds, or throw an exception */
+            if (index >= _size) {
+                throw out_of_range("Index out of range");
+            } else {
+                return contents[index];
+            }
+        }
+
+        /**
+         * @brief Returns a constant reference to the element at the specified index with bounds checking.
+         * @param index The index of the element to access.
+         * @return A constant reference to the element at the given index.
+         * @throw std::out_of_range if index is out of bounds.
+         */
+        const T& at(size_t index) const {
+            /* Return a constant reference if the element is in bounds, or throw an exception */
             if (index >= _size) {
                 throw out_of_range("Index out of range");
             } else {
@@ -167,10 +181,28 @@ class Vector {
         }
 
         /**
+         * @brief Returns a constant reference to the element at the specified index.
+         * @param index The index of the element to access.
+         * @return A reference to the element at the given index
+         */
+        const T& operator[](size_t index) const {
+            /* Return a constant reference */
+            return contents[index];
+        }
+
+        /**
          * @brief Returns a pointer to the underlying array.
          * @return A pointer to the first element in the array.
          */
         T* data() {
+            return this->contents;
+        }
+
+        /**
+         * @brief Returns a constant pointer to the underlying array.
+         * @return A constant pointer to the first element in the array.
+         */
+        const T* data() const {
             return this->contents;
         }
 
@@ -180,6 +212,19 @@ class Vector {
          * @throws std::out_of_range If the vector is empty.
          */
         T& front() {
+            if (_size > 0) {
+                return contents[0];
+            } else {
+                throw std::out_of_range("Vector is empty");
+            }
+        }
+
+        /**
+         * @brief Returns a constant reference to the first element in the vector.
+         * @return A constant reference to the first element in the vector.
+         * @throws std::out_of_range If the vector is empty.
+         */
+        const T& front() const {
             if (_size > 0) {
                 return contents[0];
             } else {
@@ -199,6 +244,19 @@ class Vector {
                 throw std::out_of_range("Vector is empty");
             }
         }
+
+        /**
+         * @brief Returns a reference to the last element in the vector.
+         * @return A reference to the last element.
+         * @throws std::out_of_range If the vector is empty.
+         */
+        const T& back() const {
+            if (_size > 0) {
+                return contents[_size - 1];
+            } else {
+                throw std::out_of_range("Vector is empty");
+            }
+        }
         /** @} */
 
         /**
@@ -209,7 +267,7 @@ class Vector {
          * @brief Returns the current size of the vector.
          * @return The number of elements in the vector.
          */
-        size_t size() {
+        size_t size() const {
             return _size;
         }
 
@@ -234,6 +292,8 @@ class Vector {
                     contents[i] = value;
                 }
             }
+            /* Todo: call T destructor */
+
             /* Update size */
             _size = new_size;
         }
@@ -242,7 +302,7 @@ class Vector {
          * @brief Returns the current capacity of the vector.
          * @return The total capacity of the vector.
          */
-        size_t capacity() {
+        size_t capacity() const {
             return _capacity;
         }
 
@@ -250,12 +310,8 @@ class Vector {
          * @brief Returns whether the vector is empty.
          * @return A boolean representing whether the vector is empty.
          */
-        bool empty() {
-            if (size == 0) {
-                return true;
-            } else {
-                return false;
-            }
+        bool empty() const {
+            return (size == 0);
         }
 
         /**
@@ -279,7 +335,6 @@ class Vector {
                 /* Update capacity */
                 _capacity = new_capacity;
             }
-
         }
 
         /**
@@ -379,7 +434,7 @@ class Vector {
             /* Bounds check */
             if (position > _size) {
                 throw out_of_range("Out of range");
-            } else if (position == size) {
+            } else if (position == _size) {
                 push_back(value);
                 return;
             }
@@ -406,9 +461,28 @@ class Vector {
          * @param value The value to insert.
          */
         void insert(size_t position, size_t count, const T& value) {
-            for (size_t i = 0; i < count; i++) {
-                insert(position, value);
+            /* Bounds check */
+            if (position > _size) {
+                throw out_of_range("Out of range");
             }
+            
+            /* Reserve memory */
+            if (_capacity < count + _size) {
+                reserve(count + _size);
+            }
+
+            /* Shift existing elements */
+            for (size_t i = _size; i > position; i--) {
+                contents[i + count - 1] = contents[i - 1];
+            }
+
+            /* Add new elements */
+            for (size_t i = position; i < position + count; i++) {
+                contents[i] = value;
+            }
+
+            /* Update size */
+            _size += count;
         }
         
         /**
@@ -433,7 +507,7 @@ class Vector {
 
             /* Shift existing elements */
             for (size_t i = _size; i > position; i--) {
-                contents[i + d - 1] = contents[i - 1]; //todo: fix this loop
+                contents[i + d - 1] = contents[i - 1];
             }
 
             /* Add new elements */
@@ -482,14 +556,115 @@ class Vector {
             /* Update size */
             _size -= (last - first);
         }
-        /** @} */
+        
+        /**
+         * @brief Swaps the contents of two vectors.
+         * @param other The other vector to be swapped.
+         */
+        void swap(Vector& other) noexcept {
+            /* Allocate temporary variables */
+            T* temp_data = contents;
+            size_t temp_size = _size;
+            size_t temp_capacity = _capacity;
 
+            /* Swap */
+            contents = other.contents;
+            _size = other._size;
+            _capacity = other._capacity;
+
+            other.contents = temp_data;
+            other._size = temp_size;
+            other._capacity = temp_capacity;
+        }
+
+        /**
+         * @brief Constructs an element at the specified position within the vector.
+         * @param pos The position to construct the element.
+         * @param args Arguments passed to the object constructor.
+         */
+        template <typename... Args>
+        void emplace(size_t pos, Args&&... args) {
+            /* Bounds check */
+            if (pos > _size) {
+                throw out_of_range("Out of range");
+            } else if (pos == _size) {
+                emplace_back(std::forward<Args>(args)...);
+
+            }
+
+            /* Reserve space */
+            reserve(_capacity > 0 ? capacity * 2 : 1);
+
+            /* Shift elements */
+            for (size_t i = _size; i > pos; i--) {
+                contents[i] = contents[i-1];
+            }
+
+            /* Construct element */
+            new (&contents[pos]) T(std::forward<Args>(args)...);
+
+            /* Update size */
+            _size++;
+        }
+
+        /**
+         * @brief Constructs an elements at the end of the vector.
+         * @param args Arguments passed to the object constructor.
+         */
+        template <typename... Args>
+        void emplace_back(Args&&... args) {
+            /* Reserve space if necessary */
+            if (_size == _capacity) {
+                if (_capacity == 0) {
+                    reserve(2);
+                } else {
+                    reserve(_capacity * 2);
+                }
+            }
+
+            /* Construct element */
+            new (&contents[_size]) T(std::forward<Args>(args)...);
+
+            /* Update size */
+            _size++;
+        }
+        
         /**
          * @brief Clears the vector and sets its size to 0.
          */
         void clear() {
             _size = 0;
         }
-
+        /** @} */
     
+    /**
+     * @name Iterators
+     * @{
+     */
+
+    iterator begin() { return contents; }
+
+    const_iterator begin() const { return contents; }
+
+    iterator end() { return contents + _size; }
+
+    const_iterator end() { return contents + _size; }
+
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+
+    reverse_iterator rend() { return reverse_iterator(begin()); }
+
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+
+    const_iterator cbegin() const { return begin(); }
+
+    const_iterator cend() const { return end(); }
+
+    const_reverse_iterator crbegin() const { return rbegin(); }
+
+    const_reverse_iterator crend() const { return rend(); }
+
+    /** @} */
 };
