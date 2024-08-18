@@ -2,6 +2,8 @@
 #include <stdexcept>
 #include <limits>
 #include <initializer_list>
+#include <iterator>
+
 
 using namespace std;
 
@@ -16,6 +18,10 @@ using namespace std;
  */
 template <typename T>
 class Vector {
+    using iterator = T*;
+    using const_iterator = const T*;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     private:
         // Current size of the vector (how many elements are in the vector)
         size_t _size;
@@ -648,7 +654,7 @@ class Vector {
 
     iterator end() { return contents + _size; }
 
-    const_iterator end() { return contents + _size; }
+    const_iterator end() const { return contents + _size; }
 
     reverse_iterator rbegin() { return reverse_iterator(end()); }
 
