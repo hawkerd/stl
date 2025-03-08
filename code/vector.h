@@ -22,15 +22,12 @@ class Vector {
     using const_iterator = const T*;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    
     private:
-        // Current size of the vector (how many elements are in the vector)
-        size_t _size;
+        size_t _size; // current size (element count)
+        size_t _capacity; // current capacity (allocated memory)
 
-        // Current capacity of the vector (how much memory is allocated)
-        size_t _capacity;
-
-        // Pointer to the start of our array
-        T* contents;
+        T* contents; // pointer to the start of the array
 
     public:
 
@@ -43,37 +40,35 @@ class Vector {
          * @param size The initial size of the vector.
          * @param value The value each element is initialized to.
          */
-        Vector(size_t size = 0, const T& value = T())
-            : _size(size), _capacity(size) {
-            
-            /* Allocate memory */
+        Vector(size_t size = 0, const T& value = T()) : _size(size), _capacity(size) {
+            // allocate memory
             contents = nullptr;
             if (_size > 0) {
                 contents = new T[_size];
             }
 
-            /* Initialize the vector */
+            // initialize each element with the input value
             for (size_t i = 0; i < _size; i++) {
                 contents[i] = value;
             }
         }
 
         /**
-         * @brief Constructs a vector from an existing vector.
+         * @brief Constructs a vector from an existing vector. (copy constructor)
          * @param other The exisiting vector.
          */
         Vector(const Vector& other) {
-            /* Copy size and capacity */
+            // copy size and capacity
             _size = other._size;
             _capacity = other._capacity;
 
-            /* Allocate memory for the new vector */
+            // allocate memory
             contents = nullptr;
             if (_size > 0) {
                 contents = new T[_capacity];
             }
 
-            /* Initialize elements */
+            // initialize each element with the value from the other vector
             for (size_t i = 0; i < _size; i++) {
                 contents[i] = other.contents[i];
             }
@@ -84,17 +79,17 @@ class Vector {
          * @param list The initializer list used to construct the Vector.
          */
         Vector(initializer_list<T> list) {
-            /* Update size and capacity */
+            // update size and capacity
             _size = list.size();
             _capacity = _size;
 
-            /* Allocate memory */
+            // allocate memory
             contents = nullptr;
             if (_size > 0) {
                 contents = new T[_size];
             }
 
-            /* Initialize elements */
+            // initialize each element with the value from the initializer list
             size_t i = 0;
             for (auto it = list.begin(); it != list.end(); it++, i++) {
                 contents[i] = *it;
@@ -103,31 +98,32 @@ class Vector {
 
 
         /**
-         * @brief Assigns the contents of one vector to another
+         * @brief Assigns the contents of one vector to another (copy assignment).
          * @param other The vector being copied
          */
         Vector& operator=(const Vector& other) {
-            /* Check for self assignment */
+            // check for self assignment
             if (this == &other) {
                 return *this;
             }
 
-            /* Clean up memory */
+            // deallocate current contents
             delete[] contents;
+            contents = nullptr;
 
-            /* Copy over fields */
+            // copy size and capacity
             _size = other._size;
             _capacity = other._capacity;
             
-            /* Allocate memory according to _capacity */
+            // allocate new memory
             contents = new T[_capacity];
 
-            /* Copy over elements */
+            // copy contents from other vector
             for (size_t i = 0; i < _size; i++) {
                 contents[i] = other.contents[i];
             }
 
-            /* Return a reference */
+            // return reference to this vector
             return *this;
         }
 
@@ -153,7 +149,7 @@ class Vector {
          * @throws std::out_of_range if index is out of bounds
          */
         T& at(size_t index) {
-            /* Return a reference if the element is in bounds, or throw an exception */
+            // return a reference if the element is in bounds, or throw an exception
             if (index >= _size) {
                 throw out_of_range("Index out of range");
             } else {
@@ -168,7 +164,6 @@ class Vector {
          * @throw std::out_of_range if index is out of bounds.
          */
         const T& at(size_t index) const {
-            /* Return a constant reference if the element is in bounds, or throw an exception */
             if (index >= _size) {
                 throw out_of_range("Index out of range");
             } else {
@@ -182,7 +177,6 @@ class Vector {
          * @return A reference to the element at the given index
          */
         T& operator[](size_t index) {
-            /* Return a reference */
             return contents[index];
         }
 
@@ -192,7 +186,6 @@ class Vector {
          * @return A reference to the element at the given index
          */
         const T& operator[](size_t index) const {
-            /* Return a constant reference */
             return contents[index];
         }
 
@@ -291,16 +284,17 @@ class Vector {
          * @param value The value to initialize new elements with.
          */
         void resize(size_t new_size, const T& value = T()) {
-            /* If we are expanding, reserve space and copy elements */
+            // if we are expanding, reserve memory and initialize new elements
             if (new_size > _size) {
                 reserve(new_size);
+
+                // optionally, initialize new elements
                 for (size_t i = _size; i < new_size; i++) {
                     contents[i] = value;
                 }
             }
-            /* Todo: call T destructor */
 
-            /* Update size */
+            // update size
             _size = new_size;
         }
 
@@ -317,7 +311,7 @@ class Vector {
          * @return A boolean representing whether the vector is empty.
          */
         bool empty() const {
-            return (size == 0);
+            return (_size == 0);
         }
 
         /**
@@ -326,19 +320,19 @@ class Vector {
          */
         void reserve(size_t new_capacity) {
             if (new_capacity >= _capacity) {
-                /* Allocate new memory */
+                // allocate new memory
                 T* new_contents = new T[new_capacity];
 
-                /* Copy over contents */
+                // copy elements
                 for (size_t i = 0; i < _size; i++) {
                     new_contents[i] = contents[i];
                 }
 
-                /* Update pointers */
+                // deallocate old memory and update pointer
                 delete[] contents;
                 contents = new_contents;
 
-                /* Update capacity */
+                // update capacity
                 _capacity = new_capacity;
             }
         }
@@ -348,12 +342,19 @@ class Vector {
          */
         void shrink_to_fit() { 
             if (_capacity > _size) {
+                // allocate memory
                 T* new_contents = new T[_size];
+
+                // copy contents
                 for (size_t i = 0; i < _size; i++) {
                     new_contents[i] = contents[i];
                 }
+
+                // deallocate old memory and update pointer
                 delete[] contents;
                 contents = new_contents;
+
+                // update capacity
                 _capacity = _size;
             }
         }
@@ -369,15 +370,15 @@ class Vector {
          * @param value The new value of each element in the vector.
          */
         void assign(size_t count, const T& value) {
-            /* Allocate memory if necessary */
+            // allocate memory if necessary
             reserve(count);
 
-            /* Overwrite all values */
+            // initialize elements
             for (size_t i = 0; i < count; i++) {
                 contents[i] = value;
             }
 
-            /* Update size */
+            // update size
             _size = count;
         }
 
@@ -388,16 +389,16 @@ class Vector {
          */
         template <typename It>
         void assign(It first, It last) {
-            /* Allocate memory if necessary */
+            // allocate memory
             reserve(distance(first, last));
 
-            /* Overwrite all values */
+            // initialize elements
             size_t i = 0;
             for (It it = first; it != last; it++, ++i) {
                 contents[i] = *it;
             }
 
-            /* Update size */
+            // update size
             _size = distance(first, last);
         }
 
@@ -406,17 +407,12 @@ class Vector {
          * @param value The value to add.
          */
         void push_back(const T& value) {
-            /* Reserve space if necessary */
+            // reserve memory
             if (_size == _capacity) {
-                if (_capacity == 0) {
-                    reserve(2);
-                } else {
-                    reserve(_capacity * 2);
-                }
+                _capacity == 0 ? reserve(2) : reserve(_capacity * 2);
             }
-
             
-            /* Add on the element and update size */
+            // add element and update size
             contents[_size] = value;
             _size++;
         }
@@ -437,7 +433,7 @@ class Vector {
          * @throws out_of_range
          */
         void insert(size_t position, const T& value) {
-            /* Bounds check */
+            // bound check
             if (position > _size) {
                 throw out_of_range("Out of range");
             } else if (position == _size) {
@@ -445,17 +441,17 @@ class Vector {
                 return;
             }
 
-            /* Reserve memory if necessary */
+            // reserve memory
             if (_size == _capacity) {
-                reserve(_capacity * 2);
+                _capacity == 0 ? reserve(2) : reserve(_capacity * 2);
             }
 
-            /* Shift elements */
+            // shift elements to the right
             for (size_t i = _size; i > position; i--) {
                 contents[i] = contents[i-1];
             }
 
-            /* Insert element */
+            // insert element and update size
             contents[position] = value;
             _size++;
         }
@@ -467,27 +463,27 @@ class Vector {
          * @param value The value to insert.
          */
         void insert(size_t position, size_t count, const T& value) {
-            /* Bounds check */
+            // bounds check
             if (position > _size) {
                 throw out_of_range("Out of range");
             }
             
-            /* Reserve memory */
+            // reserve memory
             if (_capacity < count + _size) {
                 reserve(count + _size);
             }
 
-            /* Shift existing elements */
+            // shift existing elements
             for (size_t i = _size; i > position; i--) {
                 contents[i + count - 1] = contents[i - 1];
             }
 
-            /* Add new elements */
+            // add new elements
             for (size_t i = position; i < position + count; i++) {
                 contents[i] = value;
             }
 
-            /* Update size */
+            // update size
             _size += count;
         }
         
@@ -499,30 +495,30 @@ class Vector {
          */
         template <typename It>
         void insert(size_t position, It first, It last) {
-            /* Bounds check */
+            // bounds check
             if (position > _size) {
                 throw out_of_range("Out of range");
             }
 
             size_t d = distance(first, last);
 
-            /* Reserve memory if necessary */
+            // reserve memory
             if (_capacity < d + _size) {
                 reserve(d + _size);
             }
 
-            /* Shift existing elements */
+            // shift existing elements
             for (size_t i = _size; i > position; i--) {
                 contents[i + d - 1] = contents[i - 1];
             }
 
-            /* Add new elements */
+            // add new elements
             size_t i = position;
             for (It it = first; it != last; it++, i++) {
                 contents[i] = *it;
             }
 
-            /* Update size */
+            // update size
             _size += d;
         }
 
@@ -535,9 +531,12 @@ class Vector {
             if (position >= _size) {
                 throw out_of_range("Out of bounds");
             }
+
+            // shift elements
             for (size_t i = position; i < _size - 1; i++) {
                 contents[i] = contents[i+1];
             }
+
             _size--;
         }
 
@@ -548,18 +547,18 @@ class Vector {
          * @throws std::out_of_range
          */
         void erase(size_t first, size_t last) {
-            /* Boundary check */
+            // bounds check
             if ((first >= _size ) || (last > _size) || (last < first)) {
                 throw out_of_range("Out of range");
             }
 
-            /* Copy elements */
+            // shift elements
             size_t j = first;
             for (size_t i = last; i < _size; i++, j++) {
                 contents[j] = contents[i];
             }
 
-            /* Update size */
+            // update size
             _size -= (last - first);
         }
         
@@ -568,12 +567,11 @@ class Vector {
          * @param other The other vector to be swapped.
          */
         void swap(Vector& other) noexcept {
-            /* Allocate temporary variables */
+            // allocate temporary memory and swap contents
             T* temp_data = contents;
             size_t temp_size = _size;
             size_t temp_capacity = _capacity;
 
-            /* Swap */
             contents = other.contents;
             _size = other._size;
             _capacity = other._capacity;
@@ -590,26 +588,27 @@ class Vector {
          */
         template <typename... Args>
         void emplace(size_t pos, Args&&... args) {
-            /* Bounds check */
+            // bounds check
             if (pos > _size) {
                 throw out_of_range("Out of range");
             } else if (pos == _size) {
                 emplace_back(std::forward<Args>(args)...);
-
             }
 
-            /* Reserve space */
-            reserve(_capacity > 0 ? capacity * 2 : 1);
+            // reserve memory
+            if (_size == _capacity) {
+                _capacity == 0 ? reserve(2) : reserve(_capacity * 2);
+            }
 
-            /* Shift elements */
+            // shift elements
             for (size_t i = _size; i > pos; i--) {
                 contents[i] = contents[i-1];
             }
 
-            /* Construct element */
+            // construct element
             new (&contents[pos]) T(std::forward<Args>(args)...);
 
-            /* Update size */
+            // update size
             _size++;
         }
 
@@ -619,19 +618,15 @@ class Vector {
          */
         template <typename... Args>
         void emplace_back(Args&&... args) {
-            /* Reserve space if necessary */
+            // reserve memory
             if (_size == _capacity) {
-                if (_capacity == 0) {
-                    reserve(2);
-                } else {
-                    reserve(_capacity * 2);
-                }
+                _capacity == 0 ? reserve(2) : reserve(_capacity * 2);
             }
 
-            /* Construct element */
+            // construct element
             new (&contents[_size]) T(std::forward<Args>(args)...);
 
-            /* Update size */
+            // update size
             _size++;
         }
         

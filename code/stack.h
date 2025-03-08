@@ -29,6 +29,14 @@ class Stack {
         }
 
         /**
+         * @brief Constructs an element in place at the top of the stack.
+         * @param value The value of the element to construct.
+         */
+        void emplace(const T& value) {
+            v.emplace_back(value);
+        }
+
+        /**
          * @brief Pops an element off the top of the stack.
          * @throws std::out_of_range
          */
